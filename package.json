@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node server.js",
-    "heroku-postbuild": "bash postbuild.bash"
+    "heroku-postbuild": "npx puppeteer browsers install chrome"
   },
   "dependencies": {
     "express": "^4.19.2",
