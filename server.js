@@ -1,5 +1,7 @@
 const express = require('express');
 const puppeteer = require('puppeteer');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 
@@ -23,10 +25,29 @@ async function getBrowser() {
     return browser;
 }
 
+function findChrome() {
+    // Chrome is installed under /app/.cache/puppeteer/chrome/<version>/chrome-linux64/chrome
+    const base = '/app/.cache/puppeteer/chrome';
+    try {
+        const versions = fs.readdirSync(base);           // e.g. ["linux-127.0.6533.88"]
+        for (const v of versions) {
+            const candidate = path.join(base, v, 'chrome-linux64', 'chrome');
+            if (fs.existsSync(candidate)) {
+                return candidate;
+            }
+        }
+    } catch (e) {
+        console.error('Could not scan Chrome cache dir:', e.message);
+    }
+    return undefined; // fall back to Puppeteer's own resolution
+}
+
 function launchBrowser() {
+    const execPath = findChrome();
+    console.log('Using Chrome at:', execPath || '(puppeteer default)');
     return puppeteer.launch({
         headless: true,
-        executablePath: puppeteer.executablePath(),
+        executablePath: execPath,   // explicit path, no guessing
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
