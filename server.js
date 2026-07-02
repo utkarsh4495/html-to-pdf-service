@@ -26,6 +26,7 @@ async function getBrowser() {
 function launchBrowser() {
     return puppeteer.launch({
         headless: true,
+        executablePath: puppeteer.executablePath(),
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
