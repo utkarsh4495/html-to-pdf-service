@@ -20,6 +20,30 @@ async function getBrowser() {
 }
 
 function launchBrowser() {
+    const fs = require('fs');
+    const { execSync } = require('child_process');
+
+    // Print any Chrome-related environment variables the buildpack may have set
+    console.log('--- ENV VARS ---');
+    for (const k of Object.keys(process.env)) {
+        if (/chrome|chromium|puppeteer/i.test(k)) {
+            console.log(k, '=', process.env[k]);
+        }
+    }
+
+    // Search the filesystem for the actual chrome binary
+    console.log('--- SEARCHING FOR CHROME ---');
+    try {
+        const found = execSync(
+            "find /app/.apt -iname '*chrome*' -type f 2>/dev/null; " +
+            "find /app/.chrome* -iname '*chrome*' -type f 2>/dev/null; " +
+            "ls -la /app/.apt/usr/bin/ 2>/dev/null | grep -i chrome"
+        ).toString();
+        console.log('Found:', found || '(nothing)');
+    } catch (e) {
+        console.log('Search error:', e.message);
+    }
+
     const execPath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
     console.log('Launching Chrome from:', execPath || '(puppeteer default)');
     return puppeteer.launch({
