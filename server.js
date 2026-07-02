@@ -20,11 +20,15 @@ async function getBrowser() {
 }
 
 function launchBrowser() {
+    const execPath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
+    console.log('Launching Chrome from:', execPath || '(puppeteer default)');
     return puppeteer.launch({
         headless: true,
+        executablePath: execPath,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
             '--single-process',
             '--no-zygote'
         ]
