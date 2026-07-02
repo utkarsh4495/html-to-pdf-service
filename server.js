@@ -20,28 +20,24 @@ async function getBrowser() {
 }
 
 function launchBrowser() {
-    const fs = require('fs');
     const { execSync } = require('child_process');
 
-    // Print any Chrome-related environment variables the buildpack may have set
-    console.log('--- ENV VARS ---');
-    for (const k of Object.keys(process.env)) {
-        if (/chrome|chromium|puppeteer/i.test(k)) {
-            console.log(k, '=', process.env[k]);
-        }
-    }
-
-    // Search the filesystem for the actual chrome binary
-    console.log('--- SEARCHING FOR CHROME ---');
+    console.log('--- SEARCHING FOR CHROME BINARIES ---');
     try {
         const found = execSync(
-            "find /app/.apt -iname '*chrome*' -type f 2>/dev/null; " +
-            "find /app/.chrome* -iname '*chrome*' -type f 2>/dev/null; " +
-            "ls -la /app/.apt/usr/bin/ 2>/dev/null | grep -i chrome"
+            "find /app -type f \\( -iname 'chrome' -o -iname 'chromium' -o -iname 'google-chrome*' -o -iname 'chrome-headless*' \\) 2>/dev/null || true"
         ).toString();
-        console.log('Found:', found || '(nothing)');
+        console.log('Binaries found:\n', found || '(none found)');
     } catch (e) {
         console.log('Search error:', e.message);
+    }
+
+    console.log('--- LISTING .apt/usr/bin ---');
+    try {
+        const ls = execSync("ls -la /app/.apt/usr/bin/ 2>/dev/null || echo 'no .apt/usr/bin dir'").toString();
+        console.log(ls);
+    } catch (e) {
+        console.log('ls error:', e.message);
     }
 
     const execPath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
@@ -49,13 +45,7 @@ function launchBrowser() {
     return puppeteer.launch({
         headless: true,
         executablePath: execPath,
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--single-process',
-            '--no-zygote'
-        ]
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--single-process', '--no-zygote']
     });
 }
 
