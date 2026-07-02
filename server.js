@@ -7,16 +7,6 @@ const app = express();
 // too small for a multi-record report, so we raise it.
 app.use(express.json({ limit: '25mb' }));
 
-// --- Security check ---
-// Salesforce must send a secret header "x-api-key" that matches the
-// API_KEY value you'll set in Heroku later. If it doesn't match, reject.
-app.use((req, res, next) => {
-    if (req.headers['x-api-key'] !== process.env.API_KEY) {
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
-    next();
-});
-
 // --- Reuse one browser instead of launching Chrome every time ---
 // Launching Chrome per request is slow. We launch once and reuse it.
 let browserPromise = null;
@@ -45,8 +35,16 @@ function launchBrowser() {
     });
 }
 
+// Security check — applies ONLY to the PDF endpoint, not the health check
+function checkApiKey(req, res, next) {
+    if (req.headers['x-api-key'] !== process.env.API_KEY) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    next();
+}
+
 // --- The main endpoint that Salesforce calls ---
-app.post('/html-to-pdf', async (req, res) => {
+app.post('/html-to-pdf', checkApiKey, async (req, res) => {
     const { html } = req.body;
 
     if (!html) {
